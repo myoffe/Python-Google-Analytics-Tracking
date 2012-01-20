@@ -28,11 +28,15 @@ Google Analytics is a registered trademark of Google Inc.
 
 import re
 
-from googleanalytics.internals.request.PageviewRequest import PageviewRequest
-from googleanalytics.internals.request.EventRequest import EventRequest
-from googleanalytics.internals.request.TransactionRequest import TransactionRequest
-from googleanalytics.internals.request.ItemRequest import ItemRequest
-from googleanalytics.internals.request.SocialInteractionRequest import SocialInteractionRequest
+from analytics.internals.request.PageviewRequest import PageviewRequest
+from analytics.internals.request.EventRequest import EventRequest
+from analytics.internals.request.TransactionRequest import TransactionRequest
+from analytics.internals.request.ItemRequest import ItemRequest
+from analytics.internals.request.SocialInteractionRequest import SocialInteractionRequest
+
+
+class AnalyticsError(Exception):
+    pass
 
 
 class Tracker(object):
@@ -51,17 +55,11 @@ class Tracker(object):
     VERSION = '5.2.2' # As of 15.11.2011
 
 
-    """ 
-      The configuration to use for all tracker instances.
-      
-    @var \UnitedPrototype\GoogleAnalytics\Config
-    """
+    # @type analytics.Config
     config = None
 
     """ 
-      Google Analytics account ID, e.g. "UA-1234567-8", will be mapped to
-    "utmac" parameter
-      
+
     @see Internals\ParameterHolder::utmac
     @var string
     """
@@ -96,178 +94,136 @@ class Tracker(object):
     @param string domainName
     @param \UnitedPrototype\GoogleAnalytics\Config config
     """
-    def __init__(self, accountId, domainName, config=None):
+    def __init__(self, account_id, domain_name, config=None):
         Tracker.config = config
 
         self.allowHash = True
-        self.customVariables = {}
+        self.custom_variables = {}
         self.campaign = None
         
-        self.setAccountId(accountId)
-        self.setDomainName(domainName)
+        self.account_id = account_id
+        self.domain_name = domain_name
 
 
-    """ 
-    @return \UnitedPrototype\GoogleAnalytics\Config
-    """
-    @classmethod
-    def getConfig(cls):
-        return cls.config
-        
-
-    """ 
-    @param \UnitedPrototype\GoogleAnalytics\Config value
-    """
-    @classmethod    
-    def setConfig(cls, value):
-        cls.config = value
-
-
-    """ 
-    @param string value
-    """
     RE_VALID_GA_ACCOUNT_ID = re.compile(r'UA-[0-9]-[0-9]')
-    def setAccountId(self, value):
+
+    @property
+    def account_id(self):
+        """
+        Google Analytics account ID, e.g. "UA-1234567-8", will be mapped to
+        "utmac" parameter
+
+        """
+        return self._account_id
+
+    @account_id.setter
+    def account_id(self, value):
         if not Tracker.RE_VALID_GA_ACCOUNT_ID.match(value):
             raise ValueError('%s is not a valid Google Analytics account ID.' % value)
-        
-        self.accountId = value
+
+        self._account_id = value
 
 
-    """ 
-    @return string
-    """
-    def getAccountId(self):
-        return self.accountId
+    @property
+    def domain_name(self):
+        return self._domain_name
+
+    @domain_name.setter
+    def domain_name(self, value):
+        self._domain_name = value
 
 
-    """ 
-    @param string value
-    """
-    def setDomainName(self, value):
-        self.domainName = value
+    @property
+    def allow_hash(self):
+        return self._allow_hash
+
+    @allow_hash.setter
+    def allow_hash(self, value):
+        self._allow_hash = value
 
 
-    """ 
-    @return string
-    """
-    def getDomainName(self):
-        return self.domainName
+    def add_custom_variable(self, custom_variable):
+        """
+        Equivalent of _setCustomVar() in GA Javascript client.
 
-
-    """ 
-    @param bool value
-    """
-    def setAllowHash(self, value):
-        self.allowHash = value
-
-
-    """ 
-    @return bool
-    """
-    def getAllowHash(self):
-        return self.allowHash
-
-
-    """ 
-      Equivalent of _setCustomVar() in GA Javascript client.
-      
-    @link http://code.google.com/apis/analytics/docs/tracking/gaTrackingCustomVariables.html
-    @param \UnitedPrototype\GoogleAnalytics\CustomVariable customVariable
-    """
-    def addCustomVariable(self, customVariable):
+        @link http://code.google.com/apis/analytics/docs/tracking/gaTrackingCustomVariables.html
+        """
         # Ensure that all required parameters are set
-        customVariable.validate()
+        custom_variable.validate()
         
-        index = customVariable.getIndex()
-        self.customVariables[index] = customVariable
+        index = custom_variable.index
+        self.custom_variables[index] = custom_variable
 
 
-    """ 
-    @return \UnitedPrototype\GoogleAnalytics\CustomVariable[]
-    """
-    def getCustomVariables(self):
-        return self.customVariables
+    @property
+    def custom_variables(self):
+        return self._custom_variables
 
 
-    """ 
-      Equivalent of _deleteCustomVar() in GA Javascript client.
-      
-    @param int index
-    """
-    def removeCustomVariable(self, index):
-        del self.customVariables[index]
+    def remove_custom_variable(self, index):
+        """
+        Equivalent of _deleteCustomVar() in GA Javascript client.
+        """
+        del self.custom_variables[index]
 
 
-    """ 
-    @param \UnitedPrototype\GoogleAnalytics\Campaign campaign Isn't really optional, but can be set to None
-    """
-    def setCampaign(self, campaign = None):
+    @property
+    def campaign(self):
+        return self._campaign
+
+    @campaign.setter
+    def campaign(self, campaign = None):
+        """
+        Isn't really optional, but can be set to None
+        """
         if campaign:
             # Ensure that all required parameters are set
             campaign.validate()
         
-        self.campaign = campaign
+        self._campaign = campaign
 
 
-    """ 
-    @return \UnitedPrototype\GoogleAnalytics\Campaign|None
-    """
-    def getCampaign(self):
-        return self.campaign
+    def track_pageview(self, page, session, visitor):
+        """
+        Equivalent of _trackPageview() in GA Javascript client.
 
-
-    """ 
-      Equivalent of _trackPageview() in GA Javascript client.
-      
-    @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiBasicConfiguration.html#_gat.GA_Tracker_._trackPageview
-    @param \UnitedPrototype\GoogleAnalytics\Page page
-    @param \UnitedPrototype\GoogleAnalytics\Session session
-    @param \UnitedPrototype\GoogleAnalytics\Visitor visitor
-    """
-    def trackPageview(self, page, session, visitor):
+        @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiBasicConfiguration.html#_gat.GA_Tracker_._trackPageview
+        """
         request = PageviewRequest(Tracker.config)
-        request.setPage(page)
-        request.setSession(session)
-        request.setVisitor(visitor)
-        request.setTracker(self)
+        request.page = page
+        request.session = session
+        request.visitor = visitor
+        request.tracker = self
         request.fire()
 
 
-    """ 
-      Equivalent of _trackEvent() in GA Javascript client.
-      
-    @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEventTracking.html#_gat.GA_EventTracker_._trackEvent
-    @param \UnitedPrototype\GoogleAnalytics\Event event
-    @param \UnitedPrototype\GoogleAnalytics\Session session
-    @param \UnitedPrototype\GoogleAnalytics\Visitor visitor
-    """
-    def trackEvent(self, event, session, visitor):
+    def track_event(self, event, session, visitor):
+        """
+        Equivalent of _trackEvent() in GA Javascript client.
+
+        @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEventTracking.html#_gat.GA_EventTracker_._trackEvent
+        """
         # Ensure that all required parameters are set
         event.validate()
         
         request = EventRequest(Tracker.config)
-        request.setEvent(event)
-        request.setSession(session)
-        request.setVisitor(visitor)
-        request.setTracker(self)
+        request.event = event
+        request.session = session
+        request.visitor = visitor
+        request.tracker = self
         request.fire()
 
 
-    """ 
-      Combines _addTrans(), _addItem() (indirectly) and _trackTrans() of GA Javascript client.
-      Although the naming of "_addTrans()" would suggest multiple possible transactions
-      per request, there is just one allowed actually.
-      
-    @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._addTrans
-    @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._addItem
-    @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._trackTrans
-      
-    @param \UnitedPrototype\GoogleAnalytics\Transaction transaction
-    @param \UnitedPrototype\GoogleAnalytics\Session session
-    @param \UnitedPrototype\GoogleAnalytics\Visitor visitor
-    """
-    def trackTransaction(self, transaction, session, visitor):
+    def track_transaction(self, transaction, session, visitor):
+        """
+        Combines _addTrans(), _addItem() (indirectly) and _trackTrans() of GA Javascript client.
+        Although the naming of "_addTrans()" would suggest multiple possible transactions
+        per request, there is just one allowed actually.
+
+        @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._addTrans
+        @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._addItem
+        @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._trackTrans
+        """
         # Ensure that all required parameters are set
         transaction.validate()
         
@@ -294,21 +250,17 @@ class Tracker(object):
 
 
     """ 
-      Equivalent of _trackSocial() in GA Javascript client.
+      Equivalent of _track_social() in GA Javascript client.
       
     @link http://code.google.com/apis/analytics/docs/tracking/gaTrackingSocial.html#settingUp
-    @param \UnitedPrototype\GoogleAnalytics\SocialInteraction socialInteraction
-    @param \UnitedPrototype\GoogleAnalytics\Page page
-    @param \UnitedPrototype\GoogleAnalytics\Session session
-    @param \UnitedPrototype\GoogleAnalytics\Visitor visitor
     """
-    def trackSocial(self, socialInteraction, page, session, visitor):
+    def track_social(self, social_interaction, page, session, visitor):
         request = SocialInteractionRequest(Tracker.config)
-        request.setSocialInteraction(socialInteraction)
-        request.setPage(page)
-        request.setSession(session)
-        request.setVisitor(visitor)
-        request.setTracker(self)
+        request.social_interaction = social_interaction
+        request.page = page
+        request.session = session
+        request.visitor = visitor
+        request.tracker = self
         request.fire()
 
 
@@ -323,7 +275,7 @@ class Tracker(object):
 
     @classmethod
     def raiseError(cls, message, logger):
-        from googleanalytics.Config import Config
+        from analytics.Config import Config
 
         if cls.config:
             errorSeverity = cls.config.getErrorSeverity()
@@ -335,5 +287,5 @@ class Tracker(object):
         elif errorSeverity == Config.ERROR_SEVERITY_WARNINGS:
             logger.warning(message)
         elif errorSeverity == Config.ERROR_SEVERITY_EXCEPTIONS:
-            raise Exception(message)
+            raise AnalyticsError(message)
 

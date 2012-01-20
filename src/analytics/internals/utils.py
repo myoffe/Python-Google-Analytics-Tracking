@@ -26,23 +26,22 @@ Google Analytics is a registered trademark of Google Inc.
 @copyright Copyright (c) 2010 United Prototype GmbH (http://unitedprototype.com)
 """
 
-""" 
-@link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/core/Utils.as
-"""
+# @link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/core/Utils.as
 
 import random
 import urllib
 import time
 
 
-""" 
-Mimics Javascript's encodeURIComponent() def for consistency with the GA Javascript client.
 
-@param mixed value
-@return string
-"""
-def encodeUriComponent(value):
-    return convertToUriComponentEncoding(urllib.quote(value))
+def encode_uri_component(value):
+    """
+    Mimics Javascript's encodeURIComponent() def for consistency with the GA Javascript client.
+
+    @param mixed value
+    @return string
+    """
+    return convert_to_uri_component_encoding(urllib.quote(value))
 
 
 """ 
@@ -57,7 +56,7 @@ Here as a separate method so it can also be applied to e.g. a http_build_query()
 
 URI_COMPONENT_ENCODING = {'%21': '!', '%2A': '*', '%27': "'", '%28': '(', '%29': ')'}
 
-def convertToUriComponentEncoding(encodedValue):
+def convert_to_uri_component_encoding(encodedValue):
     return replace_all(encodedValue, URI_COMPONENT_ENCODING)
 
 
@@ -67,7 +66,7 @@ Generates a 32bit random number.
 @link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/core/Utils.as#33
 @return int
 """
-def generate32bitRandom():
+def generate_32bit_random():
     return random.getrandbits(32)
 
 
@@ -78,7 +77,7 @@ Generates a hash for input string.
 @param string string
 @return int
 """
-def generateHash(string):
+def generate_hash(string):
     hashval = 1
     
     if string:

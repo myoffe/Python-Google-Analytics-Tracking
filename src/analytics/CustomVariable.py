@@ -24,7 +24,7 @@ Google Analytics is a registered trademark of Google Inc.
 @copyright Copyright (c) 2010 United Prototype GmbH (http://unitedprototype.com)
 """
 
-from googleanalytics.internals import utils
+from analytics.internals import utils
 """ 
 @link http://code.google.com/apis/analytics/docs/tracking/gaTrackingCustomVariables.html
 """

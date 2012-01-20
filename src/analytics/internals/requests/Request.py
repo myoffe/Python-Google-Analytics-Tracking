@@ -66,37 +66,37 @@ class Request(HttpRequest):
     @return string See Request::TYPE_ constants
     """
     def getType(self):
-        self.setXForwardedFor(self.visitor.getIpAddress())
-        self.setUserAgent(self.visitor.getUserAgent())
+        self.x_forwarded_for = self.visitor.ip_address
+        self.user_agent = self.visitor.user_agent
 
         # Increment session track counter for each request
-        self.session.increaseTracklen()
+        self.session.increase_tracklen()
 
         # See http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/v4/Configuration.as?r=237#48
         # and http://code.google.com/intl/de-DE/apis/analytics/docs/tracking/eventTrackerGuide.html#implementationConsiderations
-        if self.session.getTracklen() > 500):
+        if self.session.tracklen > 500):
             raise Exception('Google Analytics does not guarantee to process more than 500 requests per session.')
 
-        if self.tracker.getCampaign():
-            self.tracker.getCampaign().increaseResponselen()
+        if self.tracker.campaign:
+            self.tracker.campaign.increaseResponselen()
 
 
-        return super(Request, self).buildHttpRequest()
+        return super(Request, self).build_http_request()
 
 
     """ 
     @return \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder
     """
-    def buildParameters(self):
+    def build_parameters(self):
         p = ParameterHolder()
 
-        p.utmac = self.tracker.getAccountId()
-        p.utmhn = self.tracker.getDomainName()
+        p.utmac = self.tracker.account_id
+        p.utmhn = self.tracker.domain_name
 
-        p.utmt = self.getType()
-        p.utmn = utils.generate32bitRandom()
+        p.utmt = self.type
+        p.utmn = utils.generate_32bit_random()
 
-        if self.tracker.getConfig().getAnonymizeIpAddresses():
+        if self.tracker.config.anonymize_ip_addresses:
             p.aip = 1
         else:
             p.aip = None
@@ -105,7 +105,7 @@ class Request(HttpRequest):
         # shouldn't set it as of today but keep it here for later reference
         # p.utmip = self.visitor.getIpAddress()
 
-        p.utmhid = self.session.getSessionId()
+        p.utmhid = self.session.session_id
         p.utms   = self.session.getTracklen()
 
         p = self.buildVisitorParameters(p)
@@ -120,7 +120,7 @@ class Request(HttpRequest):
     @param \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder p
     @return \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder
     """
-    def buildVisitorParameters(self, p):
+    def build_visitor_parameters(self, p):
         # Ensure correct locale format, see https:#developer.mozilla.org/en/navigator.language
         p.utmul = self.visitor.getLocale().replace('_', '-').lower()
 
@@ -143,8 +143,8 @@ class Request(HttpRequest):
     @param \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder p
     @return \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder
     """
-    def buildCustomVariablesParameter(self, p):
-        customVars = self.tracker.getCustomVariables()
+    def build_custom_variables_parameter(self, p):
+        customVars = self.tracker.custom_variables
         if customVars:
             if len(customVars) > 5:
                 # See http://code.google.com/intl/de-DE/apis/analytics/docs/tracking/gaTrackingCustomVariables.html#usage
@@ -152,22 +152,22 @@ class Request(HttpRequest):
             
             x10 = X10()
             
-            x10.clearKey(Request.X10_CUSTOMVAR_NAME_PROJECT_ID)
-            x10.clearKey(Request.X10_CUSTOMVAR_VALUE_PROJECT_ID)
-            x10.clearKey(Request.X10_CUSTOMVAR_SCOPE_PROJECT_ID)
+            x10.clear_key(Request.X10_CUSTOMVAR_NAME_PROJECT_ID)
+            x10.clear_key(Request.X10_CUSTOMVAR_VALUE_PROJECT_ID)
+            x10.clear_key(Request.X10_CUSTOMVAR_SCOPE_PROJECT_ID)
             
-            for customVar in customVars:
+            for custom_var in custom_vars:
                 # Name and value get encoded here,
                 # see http://xahlee.org/js/google_analytics_tracker_2010-07-01_expanded.js line 563
-                name  = utils.encodeUriComponent(customVar.getName())
-                value = utils.encodeUriComponent(customVar.getValue())
+                name  = utils.encode_uri_component(custom_var.name)
+                value = utils.encode_uri_component(custom_var.value)
                 
-                x10.setKey(Request.X10_CUSTOMVAR_NAME_PROJECT_ID, customVar.getIndex(), name)
-                x10.setKey(Request.X10_CUSTOMVAR_VALUE_PROJECT_ID, customVar.getIndex(), value)
-                if customVar.getScope() is not None and customVar.getScope() != CustomVariable::SCOPE_PAGE:
-                    x10.setKey(Request.X10_CUSTOMVAR_SCOPE_PROJECT_ID, customVar.getIndex(), customVar.getScope())
+                x10.set_key(Request.X10_CUSTOMVAR_NAME_PROJECT_ID, custom_var.index, name)
+                x10.set_key(Request.X10_CUSTOMVAR_VALUE_PROJECT_ID, custom_var.index, value)
+                if custom_var.scope is not None and custom_var.scope != CustomVariable.SCOPE_PAGE:
+                    x10.set_key(Request.X10_CUSTOMVAR_SCOPE_PROJECT_ID, custom_var.index, custom_var.scope)
                 
-            p.utme .= x10.renderUrlString()
+            p.utme += x10.render_url_string()
 
         return p
 
@@ -177,23 +177,23 @@ class Request(HttpRequest):
     @param \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder p
     @return \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder
     """
-    def buildCookieParameters(self, p):
-        domainHash = self.generateDomainHash()
+    def build_cookie_parameters(self, p):
+        domain_hash = self.generate_domain_hash()
 
-        p.__utma  = domainHash . '.'
-        p.__utma += self.visitor.getUniqueId() . '.'
-        p.__utma += utils.totimestamp(self.visitor.getFirstVisitTime()) + '.'
-        p.__utma += utils.totimestamp(self.visitor.getPreviousVisitTime()) + '.'
-        p.__utma += utils.totimestamp(self.visitor.getCurrentVisitTime()) + '.'
-        p.__utma += utils.totimestamp(self.visitor.getVisitlen())
+        p.__utma  = domain_hash + '.'
+        p.__utma += self.visitor.unique_id  '.'
+        p.__utma += utils.totimestamp(self.visitor.first_visit_time) + '.'
+        p.__utma += utils.totimestamp(self.visitor.previous_visit_time) + '.'
+        p.__utma += utils.totimestamp(self.visitor.current_visit_time) + '.'
+        p.__utma += utils.totimestamp(self.visitor.visitlen)
 
-        p.__utmb  = domainHash + '.'
-        p.__utmb += self.session.getTracklen() + '.'
+        p.__utmb  = domain_hash + '.'
+        p.__utmb += self.session.tracklen + '.'
         # FIXME: What does "token" mean? I only encountered a value of 10 in my tests.
         p.__utmb += '10.'
-        p.__utmb += utils.totimestamp(self.session.getStartTime())
+        p.__utmb += utils.totimestamp(self.session.start_time
 
-        p.__utmc = domainHash
+        p.__utmc = domain_hash
 
         cookies = {}
         cookies.append('__utma=%s;' % p.__utma)

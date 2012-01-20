@@ -38,16 +38,10 @@ class PageviewRequest(Request):
     def __init__(self):
         self.page = None
 
-    """ 
-    @return string
-    """
     def getType(self):
         return Request.TYPE_PAGE
 
 
-    """ 
-    @return \UnitedPrototype\GoogleAnalytics\Internals\ParameterHolder
-    """
     def buildParameters(self):
         p = super(PageviewRequest, self).buildParameters()
 
