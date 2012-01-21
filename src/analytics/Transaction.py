@@ -26,74 +26,43 @@ Google Analytics is a registered trademark of Google Inc.
 @copyright Copyright (c) 2010 United Prototype GmbH (http://unitedprototype.com)
 """
 
-""" 
-@link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/ecommerce/Transaction.as
-"""
 class Transaction(object):
+    """ 
+    @link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/ecommerce/Transaction.as
+
+
+    @ivar order_id:
+        Order ID, e.g. "a2343898", will be mapped to "utmtid" parameter
+    
+    @ivar affiliation:
+        Affiliation, Will be mapped to "utmtst" parameter
+
+    @ivar total:
+        Total Cost, will be mapped to "utmtto" parameter
+
+    @ivar tax:
+        Tax Cost, will be mapped to "utmttx" parameter
+
+    @ivar shipping:
+        Shipping Cost, values as for unit and price, e.g. 3.95, will be mapped to
+        "utmtsp" parameter
+
+    @ivar city:
+        Billing City, e.g. "Cologne", will be mapped to "utmtci" parameter
+
+    @ivar region:
+        Billing Region, e.g. "North Rhine-Westphalia", will be mapped to "utmtrg" parameter
+
+    @ivar country:
+        Billing Country, e.g. "Germany", will be mapped to "utmtco" parameter
+
+    @ivar items:
+        Dictionary of Items
+    """
     
     class ValidationError(Exception):
         pass
-    """ 
-    Order ID, e.g. "a2343898", will be mapped to "utmtid" parameter
 
-    @see Internals\ParameterHolder::utmtid
-    @var string
-    """
-
-    """ 
-    Affiliation, Will be mapped to "utmtst" parameter
-
-    @see Internals\ParameterHolder::utmtst
-    @var string
-    """
-
-    """ 
-    Total Cost, will be mapped to "utmtto" parameter
-
-    @see Internals\ParameterHolder::utmtto
-    @var float
-    """
-
-    """ 
-    Tax Cost, will be mapped to "utmttx" parameter
-
-    @see Internals\ParameterHolder::utmttx
-    @var float
-    """
-
-    """ 
-    Shipping Cost, values as for unit and price, e.g. 3.95, will be mapped to
-    "utmtsp" parameter
-
-    @see Internals\ParameterHolder::utmtsp
-    @var float
-    """
-
-    """ 
-    Billing City, e.g. "Cologne", will be mapped to "utmtci" parameter
-
-    @see Internals\ParameterHolder::utmtci
-    @var string
-    """
-
-    """ 
-    Billing Region, e.g. "North Rhine-Westphalia", will be mapped to "utmtrg" parameter
-
-    @see Internals\ParameterHolder::utmtrg
-    @var string
-    """
-
-    """ 
-    Billing Country, e.g. "Germany", will be mapped to "utmtco" parameter
-
-    @see Internals\ParameterHolder::utmtco
-    @var string
-    """
-
-    """ 
-    @see Transaction::addItem()
-    @var \UnitedPrototype\GoogleAnalytics\Item[]
-    """
 
     def __init__(self):
         self.orderId = None
@@ -104,7 +73,7 @@ class Transaction(object):
         self.city = None
         self.region = None
         self.country = None
-        self.items = {}
+        self._items = {}
 
     
     
@@ -114,141 +83,30 @@ class Transaction(object):
         
     
     
-    """ 
-    @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._addItem
-    @param \UnitedPrototype\GoogleAnalytics\Item item
-    """
-    def addItem(self, item):
+    def add_item(self, item):
+        """ 
+        @link http://code.google.com/apis/analytics/docs/gaJS/gaJSApiEcommerce.html#_gat.GA_Tracker_._addItem
+        """
         # Associated items inherit the transaction's order ID
-        item.setOrderId(self.orderId)
+        item.oder_id = self.order_id
         
-        sku = item.getSku()
-        self.items[sku] = item
+        self.items[item.sku] = item
     
     
-    """ 
-    @return \UnitedPrototype\GoogleAnalytics\Item[]
-    """
-    def getItems(self):
-        return self.items
+    def items(self):
+        return self._items
     
     
-    """ 
-    @return string
-    """
-    def getOrderId(self):
+    @property
+    def order_id(self):
         return self.orderId
     
     
-    """ 
-    @param string orderId
-    """
-    def setOrderId(self, orderId):
-        self.orderId = orderId
+    @order_id.setter
+    def order_id(self, order_id):
+        self.order_id = order_id
         
         # Update order IDs of all associated items too
         for item in self.items:
-            item.setOrderId(orderId)
+            item.set_order_id(order_id)
         
-    
-    
-    """ 
-    @return string
-    """
-    def getAffiliation(self):
-        return self.affiliation
-    
-    
-    """ 
-    @param string affiliation
-    """
-    def setAffiliation(self, affiliation):
-        self.affiliation = affiliation
-    
-    
-    """ 
-    @return float
-    """
-    def getTotal(self):
-        return self.total
-    
-    
-    """ 
-    @param float total
-    """
-    def setTotal(self, total):
-        self.total = total
-    
-    
-    """ 
-    @return float
-    """
-    def getTax(self):
-        return self.tax
-    
-    
-    """ 
-    @param float tax
-    """
-    def setTax(self, tax):
-        self.tax = tax
-    
-    
-    """ 
-    @return float
-    """
-    def getShipping(self):
-        return self.shipping
-    
-    
-    """ 
-    @param float shipping
-    """
-    def setShipping(self, shipping):
-        self.shipping = shipping
-    
-    
-    """ 
-    @return string
-    """
-    def getCity(self):
-        return self.city
-    
-    
-    """ 
-    @param string city
-    """
-    def setCity(self, city):
-        self.city = city
-    
-    
-    """ 
-    @return string
-    """
-    def getRegion(self):
-        return self.region
-    
-    
-    """ 
-    @param string region
-    """
-    def setRegion(self, region):
-        self.region = region
-    
-    
-    """ 
-    @return string
-    """
-    def getCountry(self):
-        return self.country
-    
-    
-    """ 
-    @param string country
-    """
-    def setCountry(self, country):
-        self.country = country
-    
-    
-
-

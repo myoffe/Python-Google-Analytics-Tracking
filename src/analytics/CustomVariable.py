@@ -34,18 +34,6 @@ class CustomVariable(object):
         pass
 
 
-    """ 
-    @var int
-    """
-
-    """ 
-    WATCH OUT: It's a known issue that GA will not decode URL-encoded characters
-    in custom variable names and values properly, so spaces will show up
-    as "%20" in the interface etc.
-
-    @link http://www.google.com/support/forum/p/Google%20Analytics/thread?tid=2cdb3ec0be32e078
-    @var string
-    """
 
     """ 
     WATCH OUT: It's a known issue that GA will not decode URL-encoded characters
@@ -79,25 +67,20 @@ class CustomVariable(object):
 
     SCOPES = [SCOPE_VISITOR, SCOPE_SESSION, SCOPE_PAGE]
 
-    """ 
-    @param int index
-    @param string name
-    @param mixed value
-    @param int scope See SCOPE_ constants
-    """
-    def __init__(self, index=None, name=None, value=None, scope=None):
-        scope = CustomVariable.SCOPE_PAGE
 
-        if index is not None:
-            self.setIndex(index)
-        if name  is not None:
-            self.setName(name)
-        if value is not None:
-            self.setValue(value)
-        if scope is not None:
-            self.setScope(scope)
-    
-    
+    def __init__(self, index=None, name=None, value=None, scope=None):
+        self.index = index
+
+        # WATCH OUT: It's a known issue that GA will not decode URL-encoded characters
+        # in custom variable names and values properly, so spaces will show up
+        # as "%20" in the interface etc.
+        # http://www.google.com/support/forum/p/Google%20Analytics/thread?tid=2cdb3ec0be32e078
+        self.name = name
+        self.value = value
+                          
+        self.scope = scope or CustomVariable.SCOPE_PAGE
+
+
     def validate(self):
         """
         According to the GA documentation, there is a limit to the combined size of
@@ -111,18 +94,12 @@ class CustomVariable(object):
       
     
 
-    """ 
-    @return int
-    """
-    def getIndex(self):
-        return self.index
-        
-        
-    """ 
-    @link http://code.google.com/intl/de-DE/apis/analytics/docs/tracking/gaTrackingCustomVariables.html#usage
-    @param int index
-    """
-    def setIndex(self, index):
+    @property
+    def index(self):
+        return self._index
+
+    @index.setter
+    def index(self, index):
         """
         Custom Variables are limited to five slots officially, but there seems to be a
         trick to allow for more of them which we could investigate at a later time (see
@@ -131,50 +108,18 @@ class CustomVariable(object):
         if not 1 <= index <= 5:
             raise ValueError('Custom Variable index has to be between 1 and 5.')
 
-        self.index = index
+        self.index = index 
 
-        
-    """ 
-    @return string
-    """
-    def getName(self):
-        return self.name
+    
+    @property
+    def scope(self):
+        return self._scope
 
 
-    """ 
-    @param string name
-    """
-    def setName(self, name):
-        self.name = name
-
-
-    """ 
-    @return mixed
-    """
-    def getValue(self):
-        return self.value
-
-
-    """ 
-    @param mixed value
-    """
-    def setValue(self, value):
-        self.value = value
-
-
-    """ 
-    @return int
-    """
-    def getScope(self):
-        return self.scope
-
-
-    """ 
-    @param int scope
-    """
-    def setScope(self, scope):
+    @scope.setter
+    def scope(self, scope):
         if scope not in CustomVariable.SCOPES:
-            raise ValueError('Custom Variable scope has to be one of the CustomVariable::SCOPE_ constant values.')
+            raise ValueError('Custom Variable scope has to be one of the CustomVariable.SCOPE_ constant values.')
 
         self.scope = scope
 

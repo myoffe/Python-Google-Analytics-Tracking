@@ -40,64 +40,46 @@ class AnalyticsError(Exception):
 
 
 class Tracker(object):
+    """
+    @ivar account_id:
+        Google Analytics account ID, e.g. "UA-1234567-8", will be mapped to "utmac" parameter
 
+    @ivar domain_name:
+        Host Name, e.g. "www.example.com", will be mapped to "utmhn" parameter
+    
+    @ivar allow_hash:
+        Whether to generate a unique domain hash, default is true to be consistent
+        with the GA Javascript Client
+
+    @ivar custom_variables:
+        dict of CustomVariable
+        
+    @ivar campaign:
+        Campaign
+    """
+
+    VERSION = '5.2.2' # As of 15.11.2011
     """ 
-      Google Analytics client version on which this library is built upon,
-      will be mapped to "utmwv" parameter.
-      
-      This doesn't necessarily mean that all features of the corresponding
-      ga.js version are implemented but rather that the requests comply
-      with these of ga.js.
+    Google Analytics client version on which this library is built upon,
+    will be mapped to "utmwv" parameter.
+
+    This doesn't necessarily mean that all features of the corresponding
+    ga.js version are implemented but rather that the requests comply
+    with these of ga.js.
       
     @link http://code.google.com/apis/analytics/docs/gaJS/changelog.html
-    @const string
     """
-    VERSION = '5.2.2' # As of 15.11.2011
 
-
-    # @type analytics.Config
     config = None
-
-    """ 
-
-    @see Internals\ParameterHolder::utmac
-    @var string
     """
-
-    """ 
-      Host Name, e.g. "www.example.com", will be mapped to "utmhn" parameter
-      
-    @see Internals\ParameterHolder::utmhn
-    @var string
-    """
-
-    """ 
-      Whether to generate a unique domain hash, default is True to be consistent
-      with the GA Javascript Client
-      
-    @link http://code.google.com/apis/analytics/docs/tracking/gaTrackingSite.html#setAllowHash
-    @see Internals\Request\Request::generateDomainHash()
-    @var bool
-    """
-
-    """ 
-    @var array
-    """
-
-    """ 
-    @var \UnitedPrototype\GoogleAnalytics\Campaign
+    @type analytics.Config
     """
 
 
-    """ 
-    @param string accountId
-    @param string domainName
-    @param \UnitedPrototype\GoogleAnalytics\Config config
-    """
     def __init__(self, account_id, domain_name, config=None):
         Tracker.config = config
 
-        self.allowHash = True
+        self.allow_hash = True
         self.custom_variables = {}
         self.campaign = None
         
@@ -109,11 +91,6 @@ class Tracker(object):
 
     @property
     def account_id(self):
-        """
-        Google Analytics account ID, e.g. "UA-1234567-8", will be mapped to
-        "utmac" parameter
-
-        """
         return self._account_id
 
     @account_id.setter

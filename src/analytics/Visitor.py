@@ -30,141 +30,78 @@ import re
 
 from analytics.internals import utils
 
-""" 
-You should serialize this object and store it in the user database to keep it
-persistent for the same user permanently (similar to the "__umta" cookie of
-the GA Javascript client).
-"""
+
 class Visitor(object):
-
     """ 
-    Unique user ID, will be part of the "__utma" cookie parameter
+    You should serialize this object and store it in the user database to keep it
+    persistent for the same user permanently (similar to the "__umta" cookie of
+    the GA Javascript client).
 
-    @see Internals\ParameterHolder::__utma
-    @var int
-    """
+    @ivar unique_id:
+        Unique user ID, will be part of the "__utma" cookie parameter
 
-    """ 
-    Time of the very first visit of this user, will be part of the "__utma"
-    cookie parameter
+    @ivar first_visit_time:
+        Time of the very first visit of this user, will be part of the "__utma" cookie parameter
 
-    @see Internals\ParameterHolder::__utma
-    @var DateTime
-    """
+    @ivar previous_visit_time:
+        Time of the previous visit of this user, will be part of the "__utma" cookie parameter
 
-    """ 
-    Time of the previous visit of this user, will be part of the "__utma"
-    cookie parameter
+    @ivar current_visit_time:
+        Time of the current visit of this user, will be part of the "__utma" cookie parameter
 
-    @see Internals\ParameterHolder::__utma
-    @see addSession
-    @var DateTime
-    """
+    @ivar visit_count:
+        Amount of total visits by this user, will be part of the "__utma" cookie parameter
 
-    """ 
-    Time of the current visit of this user, will be part of the "__utma"
-    cookie parameter
+    @ivar ip_address:
+        IP Address of the end user, e.g. "123.123.123.123", will be mapped to "utmip"
+        parameter and "X-Forwarded-For" request header
 
-    @see Internals\ParameterHolder::__utma
-    @see addSession
-    @var DateTime
-    """
+    @ivar user_agent:
+        User agent string of the end user, will be mapped to "User-Agent" request header
 
-    """ 
-    Amount of total visits by this user, will be part of the "__utma"
-    cookie parameter
+    @ivar locale:
+        Locale string (country part optional), e.g. "de-DE", will be mapped to "utmul" parameter
 
-    @see Internals\ParameterHolder::__utma
-    @var int
-    """
+    @ivar flash_version:
+        Visitor's Flash version, e.g. "9.0 r28", will be maped to "utmfl" parameter
 
-    """ 
-    IP Address of the end user, e.g. "123.123.123.123", will be mapped to "utmip" parameter
-    and "X-Forwarded-For" request header
+    @ivar java_enabled:
+        Visitor's Java support, will be mapped to "utmje" parameter
 
-    @see Internals\ParameterHolder::utmip
-    @see Internals\Request\HttpRequest::x_forwarded_for
-    @var string
-    """
-
-    """ 
-    User agent string of the end user, will be mapped to "User-Agent" request header
-
-    @see Internals\Request\HttpRequest::userAgent
-    @var string
-    """
-
-    """ 
-    Locale string (country part optional), e.g. "de-DE", will be mapped to "utmul" parameter
-
-    @see Internals\ParameterHolder::utmul
-    @var string
-    """
-
-    """ 
-    Visitor's Flash version, e.g. "9.0 r28", will be maped to "utmfl" parameter
-
-    @see Internals\ParameterHolder::utmfl
-    @var string
-    """
-
-    """ 
-    Visitor's Java support, will be mapped to "utmje" parameter
-
-    @see Internals\ParameterHolder::utmje
-    @var bool
-    """
-
-    """ 
-    Visitor's screen color depth, e.g. 32, will be mapped to "utmsc" parameter
-
-    @see Internals\ParameterHolder::utmsc
-    @var string
-    """
-
-    """ 
-    Visitor's screen resolution, e.g. "1024x768", will be mapped to "utmsr" parameter
-
-    @see Internals\ParameterHolder::utmsr
-    @var string
-    """
-    """ 
-    Creates a visitor without any previous visit information.
-    """
-    def __init__(self):
-        self.unique_id = None
-        self.first_visit_time = None
-        self.previous_visit_time = None
-        self.current_visit_time = None
-        self.visit_count = None
-        self.ip_address = None
-        self.user_agent = None
-        self.locale = None
-        self.flash_version = None
-        self.java_enabled = None
-        self.screen_color_depth = None
-        self.screen_resolution = None
+    @ivar screen_color_depth:
+        Visitor's screen color depth, e.g. 32, will be mapped to "utmsc" parameter
         
+    @ivar screen_resolution:
+        Visitor's screen resolution, e.g. "1024x768", will be mapped to "utmsr" parameter
+    """
+
+    def __init__(self):
+        """ 
+        Creates a visitor without any previous visit information.
+        """
+        self.unique_id = None
+
         # ga.js sets all three timestamps to now for visitors, so we do the same
         now = datetime.now()
-        self.first_visit_time = now
+        self.first_visit_time = now 
         self.previous_visit_time = now
         self.current_visit_time = now
-        
-        self.visitlen = 1
+
+        self.visit_count = 1
+        self.ip_address = None      
+        self.user_agent = None      
+        self.locale = None          
+        self.flash_version = None   
+        self.java_enabled = None    
+        self.screen_color_depth = None
+        self.screen_resolution = None
 
 
-    """ 
-      Will extract information for the "uniqueId", "firstVisitTime", "previousVisitTime",
-    "currentVisitTime" and "visitCount" properties from the given "__utma" cookie
-      value.
-      
-    @see Internals\ParameterHolder::__utma
-    @see Internals\Request\Request::buildCookieParameters()
-    @param string value
-    @return this
-    """
     def from_utma(self, value):
+        """ 
+        Will extract information for the "unique_id", "first_visit_time", "previous_visit_time",
+        "current_visit_time" and "visit_count" properties from the given "__utma" cookie value.
+        """
         parts = value.split('.')
         if len(parts) != 6:
             raise ValueError('The given "__utma" cookie value is invalid')
@@ -174,29 +111,27 @@ class Visitor(object):
         self.first_visit_time = datetime.fromtimestamp(parts[2])
         self.previous_visit_time = datetime.fromtimestamp(parts[3])
         self.current_visit_time = datetime.fromtimestamp(parts[4])
-        self.visitlen = parts[5]
+        self.visit_count = parts[5]
         
         # Allow chaining
         return self
 
 
-    """ 
-      Will extract information for the "ipAddress", "userAgent" and "locale" properties
-      from the given _SERVER variable.
-      
-    @param array value
-    @return this
-    """
     RE_VALID_IP_ADDR = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
     RE_PRIVATE_IP_ADDR = re.compile(r'^(?:127\.0\.0\.1|10\.|192\.168\.|172\.(?:1[6-9]|2[0-9]|3[0-1])\.)')
     RE_LOCALES = re.compile(r'(^|\s,\s)([a-zA-Z]1,8(-[a-zA-Z]1,8))\s(\sq\s=\s(1(\.00,3)?|0(\.[0-9]0,3)))?', re.I)
     # http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4
-    def from_server_var(self, value):
-        if not value['REMOTE_ADDR']:
+
+    def from_server_var(self, environ):
+        """ 
+        Will extract information for the "ip_address", "user_agent" and "locale" properties
+        from the given _SERVER variable.
+        """
+        if not environ.get('REMOTE_ADDR'):
             ip = None
             for key in ['X_FORWARDED_FOR', 'REMOTE_ADDR']:
-                if value[key] and not ip:
-                    ips = value[key].split(',')
+                if environ.get(key) and not ip:
+                    ips = environ[key].split(',')
                     ip  = ips[-1].strip()
                     
                     # Double-check if the address has a valid format
@@ -207,14 +142,13 @@ class Visitor(object):
                     if Visitor.RE_PRIVATE_IP_ADDR.match(ip):
                         ip = None
             if ip:
-                self.setIpAddress(ip)
+                self.ip_address = ip
         
-        if value.get('HTTP_USER_AGENT'):
-            self.user_agent = value['HTTP_USER_AGENT']
+        self.user_agent = environ.get('HTTP_USER_AGENT')
         
-        if value.get('HTTP_ACCEPT_LANGUAGE'):
+        if environ.get('HTTP_ACCEPT_LANGUAGE'):
             parsed_locales = {}
-            res = Visitor.RE_LOCALES.match(value['HTTP_ACCEPT_LANGUAGE'])
+            res = Visitor.RE_LOCALES.match(environ['HTTP_ACCEPT_LANGUAGE'])
             if res:
                 matches = list(res.groups())
                 matches[2] = map(lambda part: part.replace('-','_'), matches[2])
@@ -230,13 +164,13 @@ class Visitor(object):
         return self
 
 
-    """ 
-      Generates a hashed value from user-specific properties.
-      
-    @link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/v4/Tracker.as#542
-    @return int
-    """
     def generate_hash(self):
+        """ 
+        Generates a hashed value from user-specific properties.
+          
+        @link http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/v4/Tracker.as#542
+        @rtype int
+        """
         # TODO: Emulate orginal Google Analytics client library generation more closely
         string = self.user_agent + self.screen_resolution + self.screen_color_depth
         return utils.generate_hash(string)
@@ -277,7 +211,7 @@ class Visitor(object):
 
     def add_session(self, session):
         """ 
-        Updates the "previousVisitTime", "currentVisitTime" and "visitCount"
+        Updates the "previous_visit_time", "current_visit_time" and "visit_count"
         fields based on the given session object.
           
         @param Session session

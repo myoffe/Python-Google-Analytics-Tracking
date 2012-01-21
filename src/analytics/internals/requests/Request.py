@@ -185,7 +185,7 @@ class Request(HttpRequest):
         p.__utma += utils.totimestamp(self.visitor.first_visit_time) + '.'
         p.__utma += utils.totimestamp(self.visitor.previous_visit_time) + '.'
         p.__utma += utils.totimestamp(self.visitor.current_visit_time) + '.'
-        p.__utma += utils.totimestamp(self.visitor.visitlen)
+        p.__utma += utils.totimestamp(self.visitor.visit_count)
 
         p.__utmb  = domain_hash + '.'
         p.__utmb += self.session.tracklen + '.'
@@ -219,19 +219,19 @@ class Request(HttpRequest):
         if campaign:
             p.__utmz  = self.generateDomainHash() + '.'
             p.__utmz .= utils.totimestamp(campaign.getCreationTime()) + '.'
-            p.__utmz .= self.visitor.getVisitlen() + '.'
+            p.__utmz .= self.visitor.visit_count + '.'
             p.__utmz .= campaign.getResponselen() + '.'
             
             # See http://code.google.com/p/gaforflash/source/browse/trunk/src/com/google/analytics/campaign/CampaignTracker.as#236
             data = {
-                'utmcid': campaign.getId(),
-                'utmcsr': campaign.getSource(),
-                'utmgclid': campaign.getGClickId(),
-                'utmdclid': campaign.getDClickId(),
-                'utmccn': campaign.getName(),
-                'utmcmd': campaign.getMedium(),
-                'utmctr': campaign.getTerm(),
-                'utmcct': campaign.getContent(),
+                'utmcid': campaign.id,
+                'utmcsr': campaign.source,
+                'utmgclid': campaign.g_click_id,
+                'utmdclid': campaign.d_click_id,
+                'utmccn': campaign.name,
+                'utmcmd': campaign.medium,
+                'utmctr': campaign.term,
+                'utmcct': campaign.content,
             }
 
             for key, value in data:
@@ -251,8 +251,8 @@ class Request(HttpRequest):
     def generateDomainHash(self):
         hash = 1
 
-        if self.tracker.getAllowHash():
-            hash = utils.generateHash(self.tracker.getDomainName())
+        if self.tracker.allow_hash:
+            hash = utils.generate_hash(self.tracker.getDomainName())
 
         return hash
 
